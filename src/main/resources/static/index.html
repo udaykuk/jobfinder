@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Job Copilot</title>
+<style>
+  :root {
+    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #646d78; --line: #e3e6ea;
+    --accent: #2f6fed; --accent-soft: #e8efff; --me: #2f6fed; --me-text: #fff;
+    --ok: #1f8a4c; --warn: #b26b00; --bad: #c23b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #111418; --panel: #191d23; --text: #e6e9ed; --muted: #97a0ab; --line: #2a3038;
+      --accent: #6c9bff; --accent-soft: #1f2a40; --me: #3b6fd8; --me-text: #fff;
+      --ok: #4cc27f; --warn: #e0a243; --bad: #ef6b6b;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
+  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
+  header h1 { font-size: 17px; margin: 0; }
+  nav { display: flex; gap: 4px; }
+  nav button { border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; font: inherit; cursor: pointer; }
+  nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+  #status { margin-left: auto; font-size: 13px; color: var(--muted); }
+  main { max-width: 900px; margin: 0 auto; padding: 16px; }
+  section { display: none; } section.active { display: block; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
+  button.primary { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
+  button.primary:disabled { opacity: .5; cursor: default; }
+  button.ghost { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
+  input, textarea, select { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  textarea { resize: vertical; }
+
+  /* Chat */
+  #messages { height: calc(100vh - 290px); min-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 4px; }
+  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; white-space: normal; overflow-wrap: anywhere; }
+  .msg.me { align-self: flex-end; background: var(--me); color: var(--me-text); border-bottom-right-radius: 4px; white-space: pre-wrap; }
+  .msg.bot { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  .msg.bot p { margin: 0 0 8px; } .msg.bot p:last-child { margin: 0; }
+  .msg.bot ul, .msg.bot ol { margin: 4px 0 8px; padding-left: 20px; }
+  .msg.bot code { background: var(--bg); padding: 1px 4px; border-radius: 4px; }
+  .steps { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .steps span { background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
+  .copy { float: right; margin: -2px -4px 4px 8px; }
+  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+  #composer { display: flex; gap: 8px; align-items: flex-end; }
+  #composer textarea { min-height: 44px; max-height: 200px; }
+  .typing { color: var(--muted); font-style: italic; }
+
+  /* Tracker */
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .apps { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
+  .app { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .app .title { font-weight: 600; } .app .meta { font-size: 13px; color: var(--muted); }
+  .app .notes { grid-column: 1 / -1; font-size: 13px; color: var(--muted); white-space: pre-wrap; }
+  .app select { width: auto; padding: 4px 8px; font-size: 13px; }
+  .due { color: var(--warn); font-weight: 600; }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .filters button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+  .empty { color: var(--muted); text-align: center; padding: 24px; }
+
+  @media (max-width: 600px) {
+    header { flex-wrap: wrap; padding: 10px 16px; } #status { width: 100%; margin: 0; }
+    main { padding: 12px 16px; } .row { grid-template-columns: 1fr; } .msg { max-width: 95%; }
+    #messages { height: calc(100vh - 340px); }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Job Copilot</h1>
+  <nav>
+    <button data-tab="chat" class="active">Copilot</button>
+    <button data-tab="tracker">Tracker</button>
+    <button data-tab="resume">Resume</button>
+  </nav>
+  <div id="status">…</div>
+</header>
+
+<main>
+  <!-- Chat -->
+  <section id="chat" class="active">
+    <div class="card">
+      <div id="messages"></div>
+      <div class="chips">
+        <button class="ghost" data-prompt="What should I do today?">What should I do today?</button>
+        <button class="ghost" data-prompt="Draft an answer for this screening question:&#10;Question: [paste question]&#10;Job: [role, company, key skills]">Answer a screening question</button>
+        <button class="ghost" data-prompt="I just applied to [company] for the [role] role. Link: [job link]">Log an application</button>
+        <button class="ghost" data-prompt="Write a LinkedIn note to the founder of [company] about the [role] role.">LinkedIn message</button>
+      </div>
+      <form id="composer">
+        <textarea id="input" rows="2" placeholder="e.g. I applied to Razorpay for Backend Engineer. Or paste a screening question + job description."></textarea>
+        <button class="primary" id="send">Send</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- Tracker -->
+  <section id="tracker">
+    <form id="addForm" class="card">
+      <div class="row">
+        <input name="company" placeholder="Company" required>
+        <input name="role" placeholder="Role" required>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <input name="link" placeholder="Job link (optional)">
+        <select name="status"><option>APPLIED</option><option>WISHLIST</option></select>
+      </div>
+      <div style="margin-top:8px; display:flex; justify-content:flex-end"><button class="primary">Add</button></div>
+    </form>
+    <div class="filters" id="filters"></div>
+    <div class="apps" id="apps"></div>
+  </section>
+
+  <!-- Resume -->
+  <section id="resume">
+    <div class="card">
+      <p style="margin-top:0;color:var(--muted)">The agents only use what's written here when they write about you. Upload your resume PDF or paste the text.</p>
+      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap">
+        <input type="file" id="pdf" accept="application/pdf" style="width:auto">
+        <button class="ghost" id="uploadPdf">Import PDF</button>
+        <span id="resumeMsg" style="color:var(--muted);font-size:13px"></span>
+      </div>
+      <textarea id="resumeText" rows="22"></textarea>
+      <div style="margin-top:8px; display:flex; justify-content:flex-end"><button class="primary" id="saveResume">Save</button></div>
+    </div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+const STATUSES = ["WISHLIST","APPLIED","INTERVIEW","OFFER","REJECTED","GHOSTED"];
+
+async function api(path, opts = {}) {
+  const res = await fetch("/api" + path, { headers: opts.body instanceof FormData ? {} : { "Content-Type": "application/json" }, ...opts });
+  if (res.status === 204) return null;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+// ---- tabs ----
+document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("active", s.id === b.dataset.tab));
+  if (b.dataset.tab === "tracker") loadApps();
+  if (b.dataset.tab === "resume") loadResume();
+});
+
+// ---- tiny, safe markdown renderer ----
+function esc(s) { return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function inline(s) {
+  return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
+}
+function md(text) {
+  const out = []; let list = null;
+  for (const line of text.split("\n")) {
+    const ul = line.match(/^\s*[-*]\s+(.*)/), ol = line.match(/^\s*\d+[.)]\s+(.*)/), h = line.match(/^#{1,6}\s+(.*)/);
+    const type = ul ? "ul" : ol ? "ol" : null;
+    if (list && list !== type) { out.push(`</${list}>`); list = null; }
+    if (type) { if (!list) { out.push(`<${type}>`); list = type; } out.push(`<li>${inline((ul || ol)[1])}</li>`); }
+    else if (h) out.push(`<p><strong>${inline(h[1])}</strong></p>`);
+    else if (line.trim()) out.push(`<p>${inline(line)}</p>`);
+  }
+  if (list) out.push(`</${list}>`);
+  return out.join("");
+}
+
+// ---- chat ----
+let sessionId; try { sessionId = sessionStorage.getItem("sid"); } catch {}
+if (!sessionId) { sessionId = crypto.randomUUID(); try { sessionStorage.setItem("sid", sessionId); } catch {} }
+
+function addMsg(who, text, steps) {
+  const div = document.createElement("div");
+  div.className = "msg " + who;
+  if (who === "me") div.textContent = text;
+  else {
+    div.innerHTML = md(text);
+    const copy = document.createElement("button");
+    copy.className = "ghost copy"; copy.textContent = "Copy";
+    copy.onclick = () => navigator.clipboard.writeText(text).then(() => copy.textContent = "Copied");
+    div.prepend(copy);
+    if (steps && steps.length) {
+      const s = document.createElement("div"); s.className = "steps";
+      steps.forEach(t => { const b = document.createElement("span"); b.textContent = t; s.append(b); });
+      div.append(s);
+    }
+  }
+  $("#messages").append(div);
+  $("#messages").scrollTop = $("#messages").scrollHeight;
+  return div;
+}
+
+$("#composer").onsubmit = async e => {
+  e.preventDefault();
+  const text = $("#input").value.trim();
+  if (!text) return;
+  $("#input").value = ""; $("#send").disabled = true;
+  addMsg("me", text);
+  const wait = document.createElement("div"); wait.className = "msg bot typing"; wait.textContent = "Thinking…";
+  $("#messages").append(wait);
+  try {
+    const r = await api("/chat", { method: "POST", body: JSON.stringify({ sessionId, message: text }) });
+    wait.remove(); addMsg("bot", r.reply || "(no reply)", r.steps);
+  } catch (err) { wait.remove(); addMsg("bot", "Error: " + err.message); }
+  $("#send").disabled = false; $("#input").focus();
+};
+$("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#composer").requestSubmit(); } });
+document.querySelectorAll("[data-prompt]").forEach(b => b.onclick = () => { $("#input").value = b.dataset.prompt; $("#input").focus(); });
+
+// ---- tracker ----
+let filter = null;
+function renderFilters() {
+  $("#filters").innerHTML = "";
+  [null, ...STATUSES].forEach(s => {
+    const b = document.createElement("button"); b.className = "ghost" + (filter === s ? " on" : "");
+    b.textContent = s ? s[0] + s.slice(1).toLowerCase() : "All";
+    b.onclick = () => { filter = s; loadApps(); };
+    $("#filters").append(b);
+  });
+}
+async function loadApps() {
+  renderFilters();
+  const apps = await api("/applications" + (filter ? "?status=" + filter : ""));
+  const today = new Date().toISOString().slice(0, 10);
+  const box = $("#apps"); box.innerHTML = "";
+  if (!apps.length) { box.innerHTML = '<div class="card empty">No applications yet. Add one above or tell the Copilot "I applied to …".</div>'; return; }
+  for (const a of apps) {
+    const el = document.createElement("div"); el.className = "card app";
+    const due = a.followUpOn && a.followUpOn <= today && ["APPLIED","INTERVIEW"].includes(a.status);
+    const title = document.createElement("div"); title.className = "title";
+    if (a.link) { const l = document.createElement("a"); l.href = a.link; l.target = "_blank"; l.rel = "noopener"; l.textContent = `${a.company} · ${a.role}`; l.style.color = "inherit"; title.append(l); }
+    else title.textContent = `${a.company} · ${a.role}`;
+    const sel = document.createElement("select");
+    STATUSES.forEach(s => sel.add(new Option(s[0] + s.slice(1).toLowerCase(), s, false, s === a.status)));
+    sel.onchange = async () => { await api(`/applications/${a.id}`, { method: "PATCH", body: JSON.stringify({ status: sel.value }) }); loadApps(); };
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.innerHTML = [a.appliedOn && "Applied " + esc(a.appliedOn), a.followUpOn && `<span class="${due ? "due" : ""}">Follow up ${esc(a.followUpOn)}${due ? " (due)" : ""}</span>`].filter(Boolean).join(" · ") || "&nbsp;";
+    const del = document.createElement("button"); del.className = "ghost"; del.textContent = "Delete";
+    del.onclick = async () => { if (confirm(`Delete ${a.company} · ${a.role}?`)) { await api(`/applications/${a.id}`, { method: "DELETE" }); loadApps(); } };
+    const actions = document.createElement("div"); actions.style.cssText = "display:flex;gap:6px"; actions.append(sel, del);
+    el.append(title, actions, meta);
+    if (a.notes) { const n = document.createElement("div"); n.className = "notes"; n.textContent = a.notes; el.append(n); }
+    box.append(el);
+  }
+}
+$("#addForm").onsubmit = async e => {
+  e.preventDefault();
+  const body = Object.fromEntries(new FormData(e.target));
+  await api("/applications", { method: "POST", body: JSON.stringify(body) });
+  e.target.reset(); loadApps();
+};
+
+// ---- resume ----
+async function loadResume() { $("#resumeText").value = (await api("/resume")).text; }
+$("#saveResume").onclick = async () => { await api("/resume", { method: "PUT", body: JSON.stringify({ text: $("#resumeText").value }) }); $("#resumeMsg").textContent = "Saved."; };
+$("#uploadPdf").onclick = async () => {
+  const f = $("#pdf").files[0]; if (!f) { $("#resumeMsg").textContent = "Choose a PDF first."; return; }
+  const fd = new FormData(); fd.append("file", f);
+  try { $("#resumeText").value = (await api("/resume/pdf", { method: "POST", body: fd })).text; $("#resumeMsg").textContent = "Imported and saved."; }
+  catch (err) { $("#resumeMsg").textContent = "Error: " + err.message; }
+};
+
+// ---- status ----
+api("/status").then(s => {
+  $("#status").textContent = s.apiKeySet ? `Model: ${s.model}` : "⚠ GOOGLE_API_KEY not set — chat won't work";
+  if (!s.apiKeySet) $("#status").style.color = "var(--bad)";
+});
+addMsg("bot", "Hi! I track your applications and write screening answers and outreach messages from your resume.\n\nTry: **\"I applied to Razorpay for Backend Engineer\"** or **\"What should I do today?\"**");
+</script>
+</body>
+</html>
