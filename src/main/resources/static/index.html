@@ -78,6 +78,7 @@
     <button data-tab="resume">Resume</button>
   </nav>
   <div id="status">…</div>
+  <form method="post" action="/logout" style="margin:0"><button class="ghost">Log out</button></form>
 </header>
 
 <main>
@@ -136,6 +137,7 @@ const STATUSES = ["WISHLIST","APPLIED","INTERVIEW","OFFER","REJECTED","GHOSTED"]
 
 async function api(path, opts = {}) {
   const res = await fetch("/api" + path, { headers: opts.body instanceof FormData ? {} : { "Content-Type": "application/json" }, ...opts });
+  if (res.status === 401) { location.href = "/login"; throw new Error("Please log in"); }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || res.statusText);

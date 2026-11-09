@@ -30,15 +30,35 @@ screening-question answers and outreach messages from your resume.
    ```bash
    mvn spring-boot:run
    ```
-4. Open http://localhost:8080 and import your resume PDF on the **Resume** tab.
+4. Open http://localhost:8080, log in, and import your resume PDF on the **Resume** tab.
 
 Data is stored in `./data` (an H2 file database), so it survives restarts.
+
+## Deploy (Render + Neon, free tiers)
+
+1. **Neon**: create a project and copy the connection details (host, database, user, password).
+2. **Render**: New → Web Service → connect this GitHub repo. Render detects the `Dockerfile`.
+   Choose the Free instance type and add these environment variables:
+
+   | Key | Value |
+   |---|---|
+   | `GOOGLE_API_KEY` | your Gemini key |
+   | `APP_USERNAME` / `APP_PASSWORD` | the login you want (use a strong password) |
+   | `DATABASE_URL` | `jdbc:postgresql://<neon-host>/<db>?sslmode=require` |
+   | `DATABASE_USER` / `DATABASE_PASSWORD` | from Neon |
+   | `COOKIE_SECURE` | `true` |
+
+3. Deploy, open the `onrender.com` URL, log in and upload your resume.
+
+The free Render instance sleeps after ~15 minutes idle, so the first request after that takes about a minute.
 
 ## Configuration
 
 | Env var | Default | Purpose |
 |---|---|---|
 | `GOOGLE_API_KEY` | (required) | Gemini API key (in `.env` or the environment) |
+| `APP_USERNAME` / `APP_PASSWORD` | `uday` / random (printed in logs) | Login for the app |
+| `COOKIE_SECURE` | `false` | Set `true` on HTTPS deployments |
 | `JOBFINDER_MODEL` | `gemini-3.5-flash-lite` | Model used by all agents. Flash-Lite has a much larger free daily quota than `gemini-3.8-flash` (20 requests/day free) |
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | local H2 file | Point at PostgreSQL when deploying |
 | `PORT` | `8080` | HTTP port |
@@ -53,4 +73,3 @@ Data is stored in `./data` (an H2 file database), so it survives restarts.
 
 - Daily job-finder agent (search startup boards and rank roles against the resume)
 - Telegram bot for updates on the go
-- Docker + Render + Neon Postgres deployment

@@ -11,8 +11,8 @@ public class Profile {
     @Id
     private Long id = ID;
 
-    @Lob
-    @Column(columnDefinition = "TEXT")
+    // Plain long text column. (@Lob would become an "oid" large object on PostgreSQL.)
+    @Column(length = 100_000)
     private String resumeText = "";
 
     public Long getId() { return id; }
