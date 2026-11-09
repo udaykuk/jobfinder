@@ -4,113 +4,203 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Job Finder</title>
+<link rel="stylesheet" href="/app.css">
 <style>
-  :root {
-    --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #646d78; --line: #e3e6ea;
-    --accent: #2f6fed; --accent-soft: #e8efff; --me: #2f6fed; --me-text: #fff;
-    --ok: #1f8a4c; --warn: #b26b00; --bad: #c23b3b;
+  /* ---- top bar ---- */
+  .topbar { position: sticky; top: 0; z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line); }
+  .topbar-inner { max-width: 1120px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; gap: 32px; }
+  .tabs { display: flex; gap: 24px; height: 100%; }
+  .tabs button {
+    height: 100%; border: 0; background: none; font: inherit; font-weight: 600; font-size: 14px; color: var(--muted);
+    cursor: pointer; padding: 0; border-bottom: 2px solid transparent; margin-bottom: -1px;
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #111418; --panel: #191d23; --text: #e6e9ed; --muted: #97a0ab; --line: #2a3038;
-      --accent: #6c9bff; --accent-soft: #1f2a40; --me: #3b6fd8; --me-text: #fff;
-      --ok: #4cc27f; --warn: #e0a243; --bad: #ef6b6b;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; background: var(--bg); color: var(--text); }
-  header { display: flex; align-items: center; gap: 16px; padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 2; }
-  header h1 { font-size: 17px; margin: 0; }
-  nav { display: flex; gap: 4px; }
-  nav button { border: 0; background: none; color: var(--muted); padding: 6px 12px; border-radius: 8px; font: inherit; cursor: pointer; }
-  nav button.active { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-  #status { margin-left: auto; font-size: 13px; color: var(--muted); }
-  main { max-width: 900px; margin: 0 auto; padding: 16px; }
-  section { display: none; } section.active { display: block; }
-  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 16px; }
-  button.primary { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 8px 14px; font: inherit; cursor: pointer; }
-  button.primary:disabled { opacity: .5; cursor: default; }
-  button.ghost { background: none; border: 1px solid var(--line); color: var(--text); border-radius: 8px; padding: 6px 10px; font: inherit; font-size: 13px; cursor: pointer; }
-  input, textarea, select { width: 100%; font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-  textarea { resize: vertical; }
+  .tabs button:hover { color: var(--text); }
+  .tabs button.active { color: var(--text); border-bottom-color: var(--text); }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+  #status { font-size: 12px; }
+  #status .pulse { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--s-offer); margin-right: 6px; vertical-align: 1px; }
 
-  /* Chat */
-  #messages { height: calc(100vh - 290px); min-height: 280px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 4px; }
-  .msg { max-width: 85%; padding: 10px 14px; border-radius: 12px; white-space: normal; overflow-wrap: anywhere; }
-  .msg.me { align-self: flex-end; background: var(--me); color: var(--me-text); border-bottom-right-radius: 4px; white-space: pre-wrap; }
-  .msg.bot { align-self: flex-start; background: var(--panel); border: 1px solid var(--line); border-bottom-left-radius: 4px; }
+  /* ---- page ---- */
+  main { max-width: 1120px; margin: 0 auto; padding: 32px 24px 48px; }
+  section { display: none; } section.active { display: block; }
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-bottom: 20px; flex-wrap: wrap; }
+  .page-head h1 { margin: 0; font-size: 28px; letter-spacing: -0.02em; line-height: 1.2; }
+  .page-head p { margin: 4px 0 0; }
+
+  /* ---- assistant ---- */
+  .assistant-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+  .chat { display: flex; flex-direction: column; height: calc(100vh - 210px); min-height: 420px; }
+  #messages { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+  .msg { max-width: 85%; padding: 12px 16px; border-radius: 14px; overflow-wrap: anywhere; }
+  .msg.me { align-self: flex-end; background: var(--primary); color: var(--primary-text); border-bottom-right-radius: 4px; white-space: pre-wrap; }
+  .msg.bot { align-self: flex-start; background: var(--subtle); border-bottom-left-radius: 4px; }
   .msg.bot p { margin: 0 0 8px; } .msg.bot p:last-child { margin: 0; }
   .msg.bot ul, .msg.bot ol { margin: 4px 0 8px; padding-left: 20px; }
-  .msg.bot code { background: var(--bg); padding: 1px 4px; border-radius: 4px; }
-  .steps { font-size: 12px; color: var(--muted); margin-top: 6px; display: flex; flex-wrap: wrap; gap: 4px; }
-  .steps span { background: var(--bg); border: 1px solid var(--line); border-radius: 999px; padding: 0 8px; }
-  .copy { float: right; margin: -2px -4px 4px 8px; }
-  .chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
-  #composer { display: flex; gap: 8px; align-items: flex-end; }
-  #composer textarea { min-height: 44px; max-height: 200px; }
+  .msg.bot code { background: var(--surface); border: 1px solid var(--line); padding: 1px 5px; border-radius: 4px; font-size: 13px; }
+  .msg .copy { float: right; margin: -4px -6px 6px 10px; }
+  .steps { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .steps span { font-size: 11px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 1px 8px; background: var(--surface); }
   .typing { color: var(--muted); font-style: italic; }
+  .composer { border-top: 1px solid var(--line); padding: 14px; display: flex; gap: 10px; align-items: flex-end; }
+  .composer textarea { resize: none; min-height: 46px; max-height: 180px; }
 
-  /* Tracker */
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .apps { display: flex; flex-direction: column; gap: 8px; margin-top: 12px; }
-  .app { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
-  .app .title { font-weight: 600; } .app .meta { font-size: 13px; color: var(--muted); }
-  .app .notes { grid-column: 1 / -1; font-size: 13px; color: var(--muted); white-space: pre-wrap; }
-  .app select { width: auto; padding: 4px 8px; font-size: 13px; }
-  .due { color: var(--warn); font-weight: 600; }
-  .filters { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
-  .filters button.on { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
-  .empty { color: var(--muted); text-align: center; padding: 24px; }
+  .side { display: flex; flex-direction: column; gap: 16px; }
+  .side .card { padding: 18px; }
+  .side h3 { margin: 0 0 12px; font-size: 14px; letter-spacing: .01em; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; }
+  .stat b { display: block; font-size: 22px; letter-spacing: -0.02em; }
+  .stat span { font-size: 12px; color: var(--muted); }
+  .quick { display: flex; flex-direction: column; gap: 2px; }
+  .quick button {
+    text-align: left; border: 0; background: none; font: inherit; font-size: 14px; padding: 9px 10px; border-radius: 8px;
+    cursor: pointer; color: var(--text); display: flex; justify-content: space-between;
+  }
+  .quick button:hover { background: var(--subtle); }
+  .quick button::after { content: "→"; color: var(--muted); }
+  .due-list { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+  .due-list li { padding: 6px 0; border-bottom: 1px solid var(--line); }
+  .due-list li:last-child { border: 0; }
 
+  /* ---- applications ---- */
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+  .filters button {
+    border: 1px solid var(--line-strong); background: var(--surface); color: var(--text); font: inherit; font-size: 13px; font-weight: 600;
+    padding: 6px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .filters button .n { color: var(--muted); font-weight: 500; margin-left: 4px; }
+  .filters button.on { background: var(--primary); color: var(--primary-text); border-color: var(--primary); }
+  .filters button.on .n { color: inherit; opacity: .7; }
+  #addForm { padding: 18px; margin-bottom: 16px; display: none; }
+  #addForm.open { display: block; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+
+  .apps { display: flex; flex-direction: column; gap: 12px; }
+  .job { padding: 18px 20px; display: grid; grid-template-columns: 48px minmax(0, 1fr) auto; gap: 16px; align-items: center; }
+  .job:hover { border-color: var(--line-strong); }
+  .avatar {
+    width: 48px; height: 48px; border-radius: 10px; display: grid; place-items: center;
+    font-weight: 800; font-size: 20px; color: #fff; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+  }
+  .job .role { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; }
+  .job .role a { text-decoration: none; } .job .role a:hover { text-decoration: underline; }
+  .job .company { color: var(--muted); font-size: 14px; }
+  .job .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .tag { font-size: 12px; padding: 2px 8px; border-radius: 999px; background: var(--subtle); color: var(--muted); }
+  .tag.due { background: transparent; border: 1px solid var(--s-interview); color: var(--s-interview); font-weight: 600; }
+  .job .notes { grid-column: 2 / -1; font-size: 13px; color: var(--muted); white-space: pre-wrap; border-top: 1px dashed var(--line); padding-top: 10px; }
+  .job-actions { display: flex; align-items: center; gap: 8px; }
+  .status-select {
+    width: auto; appearance: none; -webkit-appearance: none; font-size: 13px; font-weight: 700; padding: 6px 28px 6px 12px; border-radius: 999px;
+    background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 11px center;
+    border: 1px solid currentColor; cursor: pointer;
+  }
+  .icon-btn { border: 0; background: none; color: var(--muted); cursor: pointer; padding: 6px; border-radius: 6px; font-size: 18px; line-height: 1; }
+  .icon-btn:hover { background: var(--subtle); color: var(--text); }
+  .empty { padding: 48px 24px; text-align: center; }
+  .empty h3 { margin: 0 0 6px; }
+
+  /* ---- resume ---- */
+  .resume-card { padding: 20px; }
+  .upload { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px; border: 1px dashed var(--line-strong); border-radius: 10px; margin-bottom: 14px; }
+  .upload input[type=file] { width: auto; border: 0; padding: 0; }
+  #resumeText { min-height: 420px; font-size: 14px; resize: vertical; }
+
+  @media (max-width: 900px) {
+    .assistant-grid { grid-template-columns: 1fr; }
+    .side { order: -1; }
+    .side .card.quick-card { display: none; }
+    .chat { height: 70vh; }
+  }
   @media (max-width: 600px) {
-    header { flex-wrap: wrap; padding: 10px 16px; } #status { width: 100%; margin: 0; }
-    main { padding: 12px 16px; } .row { grid-template-columns: 1fr; } .msg { max-width: 95%; }
-    #messages { height: calc(100vh - 340px); }
+    /* Logo + sign out on the first row, tabs on their own row underneath. */
+    .topbar-inner { padding: 0 16px; gap: 0 16px; height: auto; flex-wrap: wrap; }
+    .topbar-inner .logo { height: 52px; display: flex; align-items: center; }
+    .topbar-right { height: 52px; }
+    .tabs { order: 3; width: 100%; height: 44px; gap: 20px; }
+    #status { display: none; }
+    main { padding: 20px 16px 40px; }
+    .page-head h1 { font-size: 22px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .job { grid-template-columns: 40px minmax(0, 1fr); padding: 16px; }
+    .avatar { width: 40px; height: 40px; font-size: 17px; }
+    .job-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .job .notes { grid-column: 1 / -1; }
+    .msg { max-width: 94%; }
   }
 </style>
 </head>
 <body>
-<header>
-  <h1>Job Finder</h1>
-  <nav>
-    <button data-tab="chat" class="active">Assistant</button>
-    <button data-tab="tracker">Tracker</button>
-    <button data-tab="resume">Resume</button>
-  </nav>
-  <div id="status">…</div>
-  <form method="post" action="/logout" style="margin:0"><button class="ghost">Log out</button></form>
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="/">jobfinder<span class="dot">.</span></a>
+    <nav class="tabs">
+      <button data-tab="chat" class="active">Assistant</button>
+      <button data-tab="tracker">Applications</button>
+      <button data-tab="resume">Resume</button>
+    </nav>
+    <div class="topbar-right">
+      <span id="status" class="muted"></span>
+      <form method="post" action="/logout" style="margin:0"><button class="btn small">Sign out</button></form>
+    </div>
+  </div>
 </header>
 
 <main>
-  <!-- Chat -->
+  <!-- Assistant -->
   <section id="chat" class="active">
-    <div class="card">
-      <div id="messages"></div>
-      <div class="chips">
-        <button class="ghost" data-prompt="What should I do today?">What should I do today?</button>
-        <button class="ghost" data-prompt="Draft an answer for this screening question:&#10;Question: [paste question]&#10;Job: [role, company, key skills]">Answer a screening question</button>
-        <button class="ghost" data-prompt="I just applied to [company] for the [role] role. Link: [job link]">Log an application</button>
-        <button class="ghost" data-prompt="Write a LinkedIn note to the founder of [company] about the [role] role.">LinkedIn message</button>
+    <div class="page-head">
+      <div><h1>Assistant</h1><p class="muted">Log applications, draft answers and outreach — all from your resume.</p></div>
+    </div>
+    <div class="assistant-grid">
+      <div class="card chat">
+        <div id="messages"></div>
+        <form class="composer" id="composer">
+          <textarea id="input" rows="1" placeholder="e.g. I applied to Razorpay for Backend Engineer"></textarea>
+          <button class="btn primary" id="send">Send</button>
+        </form>
       </div>
-      <form id="composer">
-        <textarea id="input" rows="2" placeholder="e.g. I applied to Razorpay for Backend Engineer. Or paste a screening question + job description."></textarea>
-        <button class="primary" id="send">Send</button>
-      </form>
+      <aside class="side">
+        <div class="card">
+          <h3>Your pipeline</h3>
+          <div class="stats" id="stats"></div>
+        </div>
+        <div class="card" id="dueCard" hidden>
+          <h3>Follow-ups due</h3>
+          <ul class="due-list" id="dueList"></ul>
+        </div>
+        <div class="card quick-card">
+          <h3>Quick actions</h3>
+          <div class="quick">
+            <button data-prompt="What should I do today?">Plan my day</button>
+            <button data-prompt="Draft an answer for this screening question:&#10;Question: [paste question]&#10;Job: [role, company, key skills]">Answer a screening question</button>
+            <button data-prompt="I just applied to [company] for the [role] role. Link: [job link]">Log an application</button>
+            <button data-prompt="Write a LinkedIn note to the founder of [company] about the [role] role.">LinkedIn message</button>
+            <button data-prompt="Help me prepare for my interview at [company] for the [role] role.">Interview prep</button>
+          </div>
+        </div>
+      </aside>
     </div>
   </section>
 
-  <!-- Tracker -->
+  <!-- Applications -->
   <section id="tracker">
+    <div class="page-head">
+      <div><h1>Applications</h1><p class="muted" id="appsSummary"></p></div>
+      <button class="btn primary" id="toggleAdd">+ Add application</button>
+    </div>
     <form id="addForm" class="card">
-      <div class="row">
-        <input name="company" placeholder="Company" required>
-        <input name="role" placeholder="Role" required>
+      <div class="form-grid">
+        <div><label for="f-company">Company</label><input id="f-company" name="company" placeholder="e.g. Razorpay" required></div>
+        <div><label for="f-role">Role</label><input id="f-role" name="role" placeholder="e.g. Backend Engineer" required></div>
+        <div><label for="f-link">Job link</label><input id="f-link" name="link" placeholder="https://… (optional)"></div>
+        <div><label for="f-status">Status</label><select id="f-status" name="status"><option value="APPLIED">Applied</option><option value="WISHLIST">Wishlist</option></select></div>
       </div>
-      <div class="row" style="margin-top:8px">
-        <input name="link" placeholder="Job link (optional)">
-        <select name="status"><option>APPLIED</option><option>WISHLIST</option></select>
+      <div class="form-actions">
+        <button type="button" class="btn" id="cancelAdd">Cancel</button>
+        <button class="btn primary">Save application</button>
       </div>
-      <div style="margin-top:8px; display:flex; justify-content:flex-end"><button class="primary">Add</button></div>
     </form>
     <div class="filters" id="filters"></div>
     <div class="apps" id="apps"></div>
@@ -118,15 +208,17 @@
 
   <!-- Resume -->
   <section id="resume">
-    <div class="card">
-      <p style="margin-top:0;color:var(--muted)">The agents only use what's written here when they write about you. Upload your resume PDF or paste the text.</p>
-      <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap">
-        <input type="file" id="pdf" accept="application/pdf" style="width:auto">
-        <button class="ghost" id="uploadPdf">Import PDF</button>
-        <span id="resumeMsg" style="color:var(--muted);font-size:13px"></span>
+    <div class="page-head">
+      <div><h1>Resume</h1><p class="muted">The assistant only uses what's written here when it writes about you.</p></div>
+      <button class="btn primary" id="saveResume">Save</button>
+    </div>
+    <div class="card resume-card">
+      <div class="upload">
+        <input type="file" id="pdf" accept="application/pdf">
+        <button class="btn small" id="uploadPdf">Import PDF</button>
+        <span id="resumeMsg" class="muted" style="font-size:13px"></span>
       </div>
-      <textarea id="resumeText" rows="22"></textarea>
-      <div style="margin-top:8px; display:flex; justify-content:flex-end"><button class="primary" id="saveResume">Save</button></div>
+      <textarea id="resumeText" placeholder="Paste your resume text, or import a PDF above."></textarea>
     </div>
   </section>
 </main>
@@ -134,10 +226,13 @@
 <script>
 const $ = s => document.querySelector(s);
 const STATUSES = ["WISHLIST","APPLIED","INTERVIEW","OFFER","REJECTED","GHOSTED"];
+const OPEN = ["APPLIED","INTERVIEW"];
+const label = s => s[0] + s.slice(1).toLowerCase();
+const statusColor = s => `var(--s-${s.toLowerCase()})`;
 
 async function api(path, opts = {}) {
   const res = await fetch("/api" + path, { headers: opts.body instanceof FormData ? {} : { "Content-Type": "application/json" }, ...opts });
-  if (res.status === 401) { location.href = "/login"; throw new Error("Please log in"); }
+  if (res.status === 401) { location.href = "/login"; throw new Error("Please sign in"); }
   if (res.status === 204) return null;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || res.statusText);
@@ -145,15 +240,17 @@ async function api(path, opts = {}) {
 }
 
 // ---- tabs ----
-document.querySelectorAll("nav button").forEach(b => b.onclick = () => {
-  document.querySelectorAll("nav button").forEach(x => x.classList.toggle("active", x === b));
-  document.querySelectorAll("section").forEach(s => s.classList.toggle("active", s.id === b.dataset.tab));
-  if (b.dataset.tab === "tracker") loadApps();
-  if (b.dataset.tab === "resume") loadResume();
-});
+function showTab(name) {
+  document.querySelectorAll(".tabs button").forEach(x => x.classList.toggle("active", x.dataset.tab === name));
+  document.querySelectorAll("section").forEach(s => s.classList.toggle("active", s.id === name));
+  if (name === "tracker") loadApps();
+  if (name === "resume") loadResume();
+  if (name === "chat") loadSidebar();
+}
+document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => showTab(b.dataset.tab));
 
 // ---- tiny, safe markdown renderer ----
-function esc(s) { return s.replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
+function esc(s) { return String(s).replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c])); }
 function inline(s) {
   return esc(s).replace(/`([^`]+)`/g, "<code>$1</code>").replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>")
     .replace(/(^|[^*])\*([^*\n]+)\*/g, "$1<em>$2</em>");
@@ -183,7 +280,7 @@ function addMsg(who, text, steps) {
   else {
     div.innerHTML = md(text);
     const copy = document.createElement("button");
-    copy.className = "ghost copy"; copy.textContent = "Copy";
+    copy.className = "btn small copy"; copy.type = "button"; copy.textContent = "Copy";
     copy.onclick = () => navigator.clipboard.writeText(text).then(() => copy.textContent = "Copied");
     div.prepend(copy);
     if (steps && steps.length) {
@@ -194,67 +291,114 @@ function addMsg(who, text, steps) {
   }
   $("#messages").append(div);
   $("#messages").scrollTop = $("#messages").scrollHeight;
-  return div;
 }
 
 $("#composer").onsubmit = async e => {
   e.preventDefault();
   const text = $("#input").value.trim();
   if (!text) return;
-  $("#input").value = ""; $("#send").disabled = true;
+  $("#input").value = ""; autosize(); $("#send").disabled = true;
   addMsg("me", text);
   const wait = document.createElement("div"); wait.className = "msg bot typing"; wait.textContent = "Thinking…";
-  $("#messages").append(wait);
+  $("#messages").append(wait); $("#messages").scrollTop = $("#messages").scrollHeight;
   try {
     const r = await api("/chat", { method: "POST", body: JSON.stringify({ sessionId, message: text }) });
     wait.remove(); addMsg("bot", r.reply || "(no reply)", r.steps);
+    loadSidebar();
   } catch (err) { wait.remove(); addMsg("bot", "Error: " + err.message); }
   $("#send").disabled = false; $("#input").focus();
 };
+function autosize() { const t = $("#input"); t.style.height = "auto"; t.style.height = Math.min(t.scrollHeight, 180) + "px"; }
+$("#input").addEventListener("input", autosize);
 $("#input").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); $("#composer").requestSubmit(); } });
-document.querySelectorAll("[data-prompt]").forEach(b => b.onclick = () => { $("#input").value = b.dataset.prompt; $("#input").focus(); });
+document.querySelectorAll("[data-prompt]").forEach(b => b.onclick = () => {
+  $("#input").value = b.dataset.prompt; autosize(); $("#input").focus();
+  const i = $("#input").value.indexOf("["); if (i >= 0) $("#input").setSelectionRange(i, $("#input").value.indexOf("]", i) + 1);
+});
 
-// ---- tracker ----
+// ---- sidebar ----
+let allApps = [];
+async function fetchApps() { allApps = await api("/applications"); return allApps; }
+const today = () => new Date().toISOString().slice(0, 10);
+const isDue = a => a.followUpOn && a.followUpOn <= today() && OPEN.includes(a.status);
+
+async function loadSidebar() {
+  try { await fetchApps(); } catch { return; }
+  const count = s => allApps.filter(a => a.status === s).length;
+  const stats = [["Applied", count("APPLIED")], ["Interviews", count("INTERVIEW")], ["Offers", count("OFFER")], ["Total", allApps.length]];
+  $("#stats").innerHTML = stats.map(([k, v]) => `<div class="stat"><b>${v}</b><span>${k}</span></div>`).join("");
+  const due = allApps.filter(isDue);
+  $("#dueCard").hidden = !due.length;
+  $("#dueList").innerHTML = due.slice(0, 5).map(a => `<li><strong>${esc(a.company)}</strong> <span class="muted">· ${esc(a.role)}</span></li>`).join("");
+}
+
+// ---- applications ----
 let filter = null;
+function avatarColor(name) {
+  const palette = ["#111827", "#1f6feb", "#7c3aed", "#0f766e", "#b45309", "#be123c", "#334155", "#15803d"];
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+  return palette[h % palette.length];
+}
 function renderFilters() {
+  const counts = Object.fromEntries(STATUSES.map(s => [s, allApps.filter(a => a.status === s).length]));
   $("#filters").innerHTML = "";
   [null, ...STATUSES].forEach(s => {
-    const b = document.createElement("button"); b.className = "ghost" + (filter === s ? " on" : "");
-    b.textContent = s ? s[0] + s.slice(1).toLowerCase() : "All";
-    b.onclick = () => { filter = s; loadApps(); };
+    const n = s ? counts[s] : allApps.length;
+    if (s && !n && filter !== s) return;
+    const b = document.createElement("button"); b.className = filter === s ? "on" : "";
+    b.innerHTML = `${s ? label(s) : "All"}<span class="n">${n}</span>`;
+    b.onclick = () => { filter = s; renderApps(); };
     $("#filters").append(b);
   });
 }
-async function loadApps() {
+async function loadApps() { await fetchApps(); renderApps(); }
+function renderApps() {
   renderFilters();
-  const apps = await api("/applications" + (filter ? "?status=" + filter : ""));
-  const today = new Date().toISOString().slice(0, 10);
+  const open = allApps.filter(a => OPEN.includes(a.status)).length;
+  $("#appsSummary").textContent = allApps.length ? `${allApps.length} tracked · ${open} active` : "Track every role you apply to.";
+  const apps = filter ? allApps.filter(a => a.status === filter) : allApps;
   const box = $("#apps"); box.innerHTML = "";
-  if (!apps.length) { box.innerHTML = '<div class="card empty">No applications yet. Add one above or tell the Assistant "I applied to …".</div>'; return; }
+  if (!apps.length) {
+    box.innerHTML = `<div class="card empty"><h3>No applications yet</h3><p class="muted">Add one, or tell the Assistant “I applied to Razorpay for Backend Engineer”.</p></div>`;
+    return;
+  }
   for (const a of apps) {
-    const el = document.createElement("div"); el.className = "card app";
-    const due = a.followUpOn && a.followUpOn <= today && ["APPLIED","INTERVIEW"].includes(a.status);
-    const title = document.createElement("div"); title.className = "title";
-    if (a.link) { const l = document.createElement("a"); l.href = a.link; l.target = "_blank"; l.rel = "noopener"; l.textContent = `${a.company} · ${a.role}`; l.style.color = "inherit"; title.append(l); }
-    else title.textContent = `${a.company} · ${a.role}`;
-    const sel = document.createElement("select");
-    STATUSES.forEach(s => sel.add(new Option(s[0] + s.slice(1).toLowerCase(), s, false, s === a.status)));
-    sel.onchange = async () => { await api(`/applications/${a.id}`, { method: "PATCH", body: JSON.stringify({ status: sel.value }) }); loadApps(); };
+    const el = document.createElement("div"); el.className = "card job";
+    const av = document.createElement("div"); av.className = "avatar";
+    av.style.background = avatarColor(a.company); av.textContent = a.company.trim()[0]?.toUpperCase() || "?";
+
+    const body = document.createElement("div");
+    const role = document.createElement("div"); role.className = "role";
+    if (a.link && /^https?:\/\//i.test(a.link)) { const l = document.createElement("a"); l.href = a.link; l.target = "_blank"; l.rel = "noopener"; l.textContent = a.role; role.append(l); }
+    else role.textContent = a.role;
+    const company = document.createElement("div"); company.className = "company"; company.textContent = a.company;
     const meta = document.createElement("div"); meta.className = "meta";
-    meta.innerHTML = [a.appliedOn && "Applied " + esc(a.appliedOn), a.followUpOn && `<span class="${due ? "due" : ""}">Follow up ${esc(a.followUpOn)}${due ? " (due)" : ""}</span>`].filter(Boolean).join(" · ") || "&nbsp;";
-    const del = document.createElement("button"); del.className = "ghost"; del.textContent = "Delete";
+    if (a.appliedOn) meta.insertAdjacentHTML("beforeend", `<span class="tag">Applied ${esc(fmt(a.appliedOn))}</span>`);
+    if (a.followUpOn && OPEN.includes(a.status))
+      meta.insertAdjacentHTML("beforeend", `<span class="tag ${isDue(a) ? "due" : ""}">${isDue(a) ? "Follow up now" : "Follow up " + esc(fmt(a.followUpOn))}</span>`);
+    body.append(role, company, meta);
+
+    const actions = document.createElement("div"); actions.className = "job-actions";
+    const sel = document.createElement("select"); sel.className = "status-select"; sel.style.color = statusColor(a.status);
+    sel.setAttribute("aria-label", "Status");
+    STATUSES.forEach(s => sel.add(new Option(label(s), s, false, s === a.status)));
+    sel.onchange = async () => { await api(`/applications/${a.id}`, { method: "PATCH", body: JSON.stringify({ status: sel.value }) }); loadApps(); };
+    const del = document.createElement("button"); del.className = "icon-btn"; del.title = "Delete"; del.setAttribute("aria-label", "Delete"); del.textContent = "×";
     del.onclick = async () => { if (confirm(`Delete ${a.company} · ${a.role}?`)) { await api(`/applications/${a.id}`, { method: "DELETE" }); loadApps(); } };
-    const actions = document.createElement("div"); actions.style.cssText = "display:flex;gap:6px"; actions.append(sel, del);
-    el.append(title, actions, meta);
+    actions.append(sel, del);
+
+    el.append(av, body, actions);
     if (a.notes) { const n = document.createElement("div"); n.className = "notes"; n.textContent = a.notes; el.append(n); }
     box.append(el);
   }
 }
+function fmt(d) { return new Date(d + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "short" }); }
+$("#toggleAdd").onclick = () => { $("#addForm").classList.toggle("open"); if ($("#addForm").classList.contains("open")) $("#f-company").focus(); };
+$("#cancelAdd").onclick = () => { $("#addForm").reset(); $("#addForm").classList.remove("open"); };
 $("#addForm").onsubmit = async e => {
   e.preventDefault();
-  const body = Object.fromEntries(new FormData(e.target));
-  await api("/applications", { method: "POST", body: JSON.stringify(body) });
-  e.target.reset(); loadApps();
+  await api("/applications", { method: "POST", body: JSON.stringify(Object.fromEntries(new FormData(e.target))) });
+  e.target.reset(); e.target.classList.remove("open"); loadApps();
 };
 
 // ---- resume ----
@@ -267,12 +411,12 @@ $("#uploadPdf").onclick = async () => {
   catch (err) { $("#resumeMsg").textContent = "Error: " + err.message; }
 };
 
-// ---- status ----
+// ---- start ----
 api("/status").then(s => {
-  $("#status").textContent = s.apiKeySet ? `Model: ${s.model}` : "⚠ GOOGLE_API_KEY not set — chat won't work";
-  if (!s.apiKeySet) $("#status").style.color = "var(--bad)";
+  $("#status").innerHTML = s.apiKeySet ? `<span class="pulse"></span>${esc(s.model)}` : `<span style="color:var(--s-rejected)">API key missing</span>`;
 });
-addMsg("bot", "Hi! I track your applications and write screening answers and outreach messages from your resume.\n\nTry: **\"I applied to Razorpay for Backend Engineer\"** or **\"What should I do today?\"**");
+addMsg("bot", "Hi! I track your applications and write screening answers and outreach messages from your resume.\n\nTry **\"I applied to Razorpay for Backend Engineer\"** or **\"What should I do today?\"**");
+loadSidebar();
 </script>
 </body>
 </html>

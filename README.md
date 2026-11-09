@@ -47,6 +47,13 @@ Data is stored in `./data` (an H2 file database), so it survives restarts.
    | `DATABASE_URL` | `jdbc:postgresql://<neon-host>/<db>?sslmode=require` |
    | `DATABASE_USER` / `DATABASE_PASSWORD` | from Neon |
    | `COOKIE_SECURE` | `true` |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | optional: "Continue with GitHub" |
+| `ALLOWED_GITHUB_USERS` | comma-separated GitHub usernames allowed to sign in |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | optional: "Continue with Google" |
+| `ALLOWED_GOOGLE_EMAILS` | comma-separated verified Google emails allowed to sign in |
+
+   OAuth callback URLs: `https://<your-app>/login/oauth2/code/github` and `https://<your-app>/login/oauth2/code/google`.
+   A provider only shows on the login page when its client ID and secret are set, and an empty allowlist lets nobody in.
 
 3. Deploy, open the `onrender.com` URL, log in and upload your resume.
 
