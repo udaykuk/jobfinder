@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Job Copilot</title>
+<title>Job Finder</title>
 <style>
   :root {
     --bg: #f6f7f9; --panel: #ffffff; --text: #1b1f24; --muted: #646d78; --line: #e3e6ea;
@@ -71,9 +71,9 @@
 </head>
 <body>
 <header>
-  <h1>Job Copilot</h1>
+  <h1>Job Finder</h1>
   <nav>
-    <button data-tab="chat" class="active">Copilot</button>
+    <button data-tab="chat" class="active">Assistant</button>
     <button data-tab="tracker">Tracker</button>
     <button data-tab="resume">Resume</button>
   </nav>
@@ -228,7 +228,7 @@ async function loadApps() {
   const apps = await api("/applications" + (filter ? "?status=" + filter : ""));
   const today = new Date().toISOString().slice(0, 10);
   const box = $("#apps"); box.innerHTML = "";
-  if (!apps.length) { box.innerHTML = '<div class="card empty">No applications yet. Add one above or tell the Copilot "I applied to …".</div>'; return; }
+  if (!apps.length) { box.innerHTML = '<div class="card empty">No applications yet. Add one above or tell the Assistant "I applied to …".</div>'; return; }
   for (const a of apps) {
     const el = document.createElement("div"); el.className = "card app";
     const due = a.followUpOn && a.followUpOn <= today && ["APPLIED","INTERVIEW"].includes(a.status);

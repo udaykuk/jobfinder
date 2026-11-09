@@ -1,4 +1,4 @@
-package com.uday.jobcopilot.tracker;
+package com.uday.jobfinder.tracker;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -18,7 +18,7 @@ public class TrackerService {
     private final int followUpDays;
 
     public TrackerService(JobApplicationRepository repo,
-                          @Value("${copilot.follow-up-days:5}") int followUpDays) {
+                          @Value("${jobfinder.follow-up-days:5}") int followUpDays) {
         this.repo = repo;
         this.followUpDays = followUpDays;
     }

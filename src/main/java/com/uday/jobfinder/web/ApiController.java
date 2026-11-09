@@ -1,9 +1,9 @@
-package com.uday.jobcopilot.web;
+package com.uday.jobfinder.web;
 
-import com.uday.jobcopilot.agent.CopilotAgentService;
-import com.uday.jobcopilot.profile.ProfileService;
-import com.uday.jobcopilot.tracker.JobApplication;
-import com.uday.jobcopilot.tracker.TrackerService;
+import com.uday.jobfinder.agent.JobFinderAgentService;
+import com.uday.jobfinder.profile.ProfileService;
+import com.uday.jobfinder.tracker.JobApplication;
+import com.uday.jobfinder.tracker.TrackerService;
 import jakarta.validation.constraints.NotBlank;
 import java.io.IOException;
 import java.time.LocalDate;
@@ -25,11 +25,11 @@ public class ApiController {
 
     private static final Logger log = LoggerFactory.getLogger(ApiController.class);
 
-    private final CopilotAgentService agent;
+    private final JobFinderAgentService agent;
     private final TrackerService tracker;
     private final ProfileService profile;
 
-    public ApiController(CopilotAgentService agent, TrackerService tracker, ProfileService profile) {
+    public ApiController(JobFinderAgentService agent, TrackerService tracker, ProfileService profile) {
         this.agent = agent;
         this.tracker = tracker;
         this.profile = profile;
@@ -40,7 +40,7 @@ public class ApiController {
     public record ChatRequest(@NotBlank String sessionId, @NotBlank String message) {}
 
     @PostMapping("/chat")
-    public CopilotAgentService.ChatReply chat(@RequestBody @Validated ChatRequest req) {
+    public JobFinderAgentService.ChatReply chat(@RequestBody @Validated ChatRequest req) {
         return agent.chat(req.sessionId(), req.message());
     }
 

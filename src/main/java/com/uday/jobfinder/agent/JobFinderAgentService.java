@@ -1,4 +1,4 @@
-package com.uday.jobcopilot.agent;
+package com.uday.jobfinder.agent;
 
 import com.google.adk.agents.LlmAgent;
 import com.google.adk.agents.RunConfig;
@@ -22,7 +22,7 @@ import org.springframework.stereotype.Service;
  * Builds the agent team and runs conversations.
  *
  * <pre>
- *            copilot (coordinator)
+ *          assistant (coordinator)
  *   ┌────────────┼─────────────────┐
  *   tracker tools  answer_writer   outreach_writer
  * </pre>
@@ -31,9 +31,9 @@ import org.springframework.stereotype.Service;
  * specialist agents (wrapped as tools, so the coordinator stays in charge of the conversation).
  */
 @Service
-public class CopilotAgentService {
+public class JobFinderAgentService {
 
-    private static final String APP = "job-copilot";
+    private static final String APP = "jobfinder";
     private static final String USER = "me";
 
     private final InMemoryRunner runner;
@@ -44,8 +44,8 @@ public class CopilotAgentService {
      * @param apiKey read from the .env file (imported in application.properties) or the
      *               GOOGLE_API_KEY / GEMINI_API_KEY environment variable.
      */
-    public CopilotAgentService(CopilotTools tools,
-                               @Value("${copilot.model}") String model,
+    public JobFinderAgentService(JobFinderTools tools,
+                               @Value("${jobfinder.model}") String model,
                                @Value("${GOOGLE_API_KEY:${GEMINI_API_KEY:}}") String apiKey) {
         this.model = model;
         this.apiKeyConfigured = !apiKey.isBlank();
@@ -97,11 +97,11 @@ public class CopilotAgentService {
                 .tools(getResume)
                 .build();
 
-        LlmAgent copilot = agentBuilder(llm)
-                .name("copilot")
-                .description("The user's job hunt copilot.")
+        LlmAgent assistant = agentBuilder(llm)
+                .name("assistant")
+                .description("The user's Job Finder assistant.")
                 .instruction("""
-                        You are the user's job hunt copilot. Be brief and practical.
+                        You are Job Finder, the user's job-hunt assistant. Be brief and practical.
 
                         SCOPE: only help with the user's job search and career:
                         applications and the tracker, resume and profile questions, screening answers,
@@ -139,7 +139,7 @@ public class CopilotAgentService {
                         AgentTool.create(outreachWriter))
                 .build();
 
-        this.runner = new InMemoryRunner(copilot, APP);
+        this.runner = new InMemoryRunner(assistant, APP);
     }
 
     public record ChatReply(String reply, List<String> steps) {}
@@ -156,7 +156,7 @@ public class CopilotAgentService {
                 part.functionCall().ifPresent(call ->
                         steps.add(event.author() + " → " + call.name().orElse("?")));
                 boolean thought = part.thought().orElse(false);
-                if (event.finalResponse() && !thought && "copilot".equals(event.author())) {
+                if (event.finalResponse() && !thought && "assistant".equals(event.author())) {
                     part.text().ifPresent(reply::append);
                 }
             }

@@ -1,9 +1,9 @@
-package com.uday.jobcopilot.agent;
+package com.uday.jobfinder.agent;
 
 import com.google.adk.tools.Annotations.Schema;
-import com.uday.jobcopilot.profile.ProfileService;
-import com.uday.jobcopilot.tracker.JobApplication;
-import com.uday.jobcopilot.tracker.TrackerService;
+import com.uday.jobfinder.profile.ProfileService;
+import com.uday.jobfinder.tracker.JobApplication;
+import com.uday.jobfinder.tracker.TrackerService;
 import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Component;
  * model what each tool does and which arguments it takes.
  */
 @Component
-public class CopilotTools {
+public class JobFinderTools {
 
     private final TrackerService tracker;
     private final ProfileService profile;
 
-    public CopilotTools(TrackerService tracker, ProfileService profile) {
+    public JobFinderTools(TrackerService tracker, ProfileService profile) {
         this.tracker = tracker;
         this.profile = profile;
     }
@@ -46,7 +46,7 @@ public class CopilotTools {
             return Map.of("status", "error", "message", e.getMessage());
         }
         return Map.of("status", "ok", "today", LocalDate.now().toString(),
-                "count", apps.size(), "applications", apps.stream().map(CopilotTools::toMap).toList());
+                "count", apps.size(), "applications", apps.stream().map(JobFinderTools::toMap).toList());
     }
 
     @Schema(name = "add_application", description = "Saves a new job application to the tracker. "
@@ -89,7 +89,7 @@ public class CopilotTools {
     public Map<String, Object> followUpsDue() {
         List<JobApplication> due = tracker.followUpsDue();
         return Map.of("status", "ok", "today", LocalDate.now().toString(),
-                "count", due.size(), "due", due.stream().map(CopilotTools::toMap).toList());
+                "count", due.size(), "due", due.stream().map(JobFinderTools::toMap).toList());
     }
 
     private static JobApplication.Status parseStatus(String s) {

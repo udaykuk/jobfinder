@@ -1,4 +1,4 @@
-package com.uday.jobcopilot.tracker;
+package com.uday.jobfinder.tracker;
 
 import java.time.LocalDate;
 import java.util.List;

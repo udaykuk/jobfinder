@@ -1,4 +1,4 @@
-# Job Copilot
+# Job Finder
 
 A personal job-hunt assistant built with **Java 21, Spring Boot 3.5 and Google ADK (Agent Development Kit)**.
 Tell it what you did in plain English and it keeps your tracker up to date. It also writes
@@ -7,14 +7,14 @@ screening-question answers and outreach messages from your resume.
 ## The agent team
 
 ```
-                 copilot  (coordinator, talks to you)
+                assistant  (coordinator, talks to you)
       ┌──────────────┬───────────┴──────────┬──────────────────┐
  tracker tools   get_resume        answer_writer        outreach_writer
  (add / update /                   (screening answers,   (LinkedIn notes,
   list / follow-ups)                resume facts only)    emails, follow-ups)
 ```
 
-- Tools are plain Java methods (`CopilotTools`) that ADK exposes to Gemini through `@Schema` annotations.
+- Tools are plain Java methods (`JobFinderTools`) that ADK exposes to Gemini through `@Schema` annotations.
 - The specialist writers are wrapped with `AgentTool`, so the coordinator stays in charge of the conversation.
 - The chat UI shows which agent called which tool for every reply.
 
@@ -39,7 +39,7 @@ Data is stored in `./data` (an H2 file database), so it survives restarts.
 | Env var | Default | Purpose |
 |---|---|---|
 | `GOOGLE_API_KEY` | (required) | Gemini API key (in `.env` or the environment) |
-| `COPILOT_MODEL` | `gemini-3.5-flash-lite` | Model used by all agents. Flash-Lite has a much larger free daily quota than `gemini-3.8-flash` (20 requests/day free) |
+| `JOBFINDER_MODEL` | `gemini-3.5-flash-lite` | Model used by all agents. Flash-Lite has a much larger free daily quota than `gemini-3.8-flash` (20 requests/day free) |
 | `DATABASE_URL` / `DATABASE_USER` / `DATABASE_PASSWORD` | local H2 file | Point at PostgreSQL when deploying |
 | `PORT` | `8080` | HTTP port |
 

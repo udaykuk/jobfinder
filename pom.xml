@@ -12,10 +12,10 @@
     </parent>
 
     <groupId>com.uday</groupId>
-    <artifactId>job-copilot</artifactId>
+    <artifactId>jobfinder</artifactId>
     <version>0.1.0</version>
-    <name>job-copilot</name>
-    <description>Personal job hunt copilot built with Spring Boot and Google ADK agents</description>
+    <name>jobfinder</name>
+    <description>Personal job-hunt assistant built with Spring Boot and Google ADK agents</description>
 
     <properties>
         <java.version>21</java.version>

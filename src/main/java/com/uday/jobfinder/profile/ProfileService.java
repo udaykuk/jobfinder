@@ -1,4 +1,4 @@
-package com.uday.jobcopilot.profile;
+package com.uday.jobfinder.profile;
 
 import java.io.IOException;
 import org.apache.pdfbox.Loader;
